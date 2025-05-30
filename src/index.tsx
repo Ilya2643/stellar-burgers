@@ -1,32 +1,19 @@
-import { useSelector } from '../../services/store';
-import styles from './constructor-page.module.css';
-import { BurgerIngredients } from '../../components';
-import { BurgerConstructor } from '../../components';
-import { Preloader } from '../../components/ui';
-import { FC } from 'react';
-import { selectIsLoading } from '../../components/slices/burgerIngridientsSlice';
+import React from 'react';
+import * as ReactDOMClient from 'react-dom/client';
+import App from './components/app/app';
+import { BrowserRouter } from 'react-router-dom';
+import { Provider } from 'react-redux';
+import store from './services/store';
 
-export const ConstructorPage: FC = () => {
-  /** TODO: взять переменную из стора */
-  const isIngredientsLoading = useSelector(selectIsLoading);
+const container = document.getElementById('root') as HTMLElement;
+const root = ReactDOMClient.createRoot(container!);
 
-  return (
-    <>
-      {isIngredientsLoading ? (
-        <Preloader />
-      ) : (
-        <main className={styles.containerMain}>
-          <h1
-            className={`${styles.title} text text_type_main-large mt-10 mb-5 pl-5`}
-          >
-            Соберите бургер
-          </h1>
-          <div className={`${styles.main} pl-5 pr-5`}>
-            <BurgerIngredients />
-            <BurgerConstructor />
-          </div>
-        </main>
-      )}
-    </>
-  );
-};
+root.render(
+  <React.StrictMode>
+    <Provider store={store}>
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
+    </Provider>
+  </React.StrictMode>
+);

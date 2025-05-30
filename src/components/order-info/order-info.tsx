@@ -1,33 +1,37 @@
 import { FC, useEffect, useMemo } from 'react';
-import { Preloader } from '../ui/preloader';
-import { OrderInfoUI } from '../ui/order-info';
 import { TIngredient } from '@utils-types';
-import { useDispatch, useSelector } from '../../services/store';
-import { fetchOrderByNumber, selectOrderData } from '../slices/orderSlice';
 import { useParams } from 'react-router-dom';
-import { selectIngredients } from '../slices/burgerIngridientsSlice';
+import {
+  getOrderByNumber,
+  getOrderByNumberSelector,
+  isSearchSuccessSelector
+} from '../../services/slices/feeds/feedsSlice';
+import { useDispatch, useSelector } from '../../services/store';
+import { getIngredientsData } from '../../services/slices/ingredients/ingredientsSlice';
+import { OrderInfoUI, Preloader } from '@ui';
 
 export const OrderInfo: FC = () => {
   /** TODO: взять переменные orderData и ingredients из стора */
-  const orderData = useSelector(selectOrderData);
+  const currentNumber = Number(useParams().number);
   const dispatch = useDispatch();
-  const param = useParams();
-  const ingredients: TIngredient[] = useSelector(selectIngredients);
-  const number = Number(param);
-
   useEffect(() => {
-    if (!orderData) {
-      dispatch(fetchOrderByNumber(number));
-    }
+    dispatch(getOrderByNumber(currentNumber));
   }, [dispatch]);
+  const isSearchSuccess = useSelector(isSearchSuccessSelector);
+  const orderData = useSelector(getOrderByNumberSelector);
+
+  const ingredients: TIngredient[] = useSelector(getIngredientsData);
 
   /* Готовим данные для отображения */
   const orderInfo = useMemo(() => {
     if (!orderData || !ingredients.length) return null;
+
     const date = new Date(orderData.createdAt);
+
     type TIngredientsWithCount = {
       [key: string]: TIngredient & { count: number };
     };
+
     const ingredientsInfo = orderData.ingredients.reduce(
       (acc: TIngredientsWithCount, item) => {
         if (!acc[item]) {
@@ -40,3 +44,29 @@ export const OrderInfo: FC = () => {
           }
         } else {
           acc[item].count++;
+        }
+
+        return acc;
+      },
+      {}
+    );
+
+    const total = Object.values(ingredientsInfo).reduce(
+      (acc, item) => acc + item.price * item.count,
+      0
+    );
+
+    return {
+      ...orderData,
+      ingredientsInfo,
+      date,
+      total
+    };
+  }, [orderData, ingredients]);
+
+  if (!orderInfo || !isSearchSuccess) {
+    return <Preloader />;
+  }
+
+  return <OrderInfoUI orderInfo={orderInfo} />;
+};

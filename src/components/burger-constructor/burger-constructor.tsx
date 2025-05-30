@@ -1,47 +1,54 @@
-import { FC, useMemo } from 'react';
+import React, { FC, useMemo } from 'react';
 import { TConstructorIngredient } from '@utils-types';
 import { BurgerConstructorUI } from '@ui';
 import { useDispatch, useSelector } from '../../services/store';
-import { getUserData } from '../slices/userAuthSlice';
+import {
+  getConstructorBun,
+  getConstructorIngredients,
+  resetConstructor
+} from '../../services/slices/burgerConstructor/burgerConstructorSlice';
+import {
+  getLastOrder,
+  getOrderRequestStatus,
+  getUserAuthStatus,
+  newUserOrder,
+  setLastOrder
+} from '../../services/slices/user/userSlice';
 import { useNavigate } from 'react-router-dom';
-import {
-  emptyIngredient,
-  selectBurgerConstructor
-} from '../slices/burgerConstructionSlice';
-import {
-  clearOrderData,
-  postOrderBurger,
-  selectOrderData,
-  selectOrderRequest
-} from '../slices/orderSlice';
+import { getAllFeeds } from '../../services/slices/feeds/feedsSlice';
 
 export const BurgerConstructor: FC = () => {
-  /** TODO: взять переменные constructorItems, orderRequest и orderModalData из стора */
-  const constructorItems = useSelector(selectBurgerConstructor);
-  const orderRequest = useSelector(selectOrderRequest);
-  const orderModalData = useSelector(selectOrderData);
-  const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { userData } = useSelector(getUserData);
+  const isAuthenticated = useSelector(getUserAuthStatus);
+  /** TODO: взять переменные constructorItems, orderRequest и orderModalData из стора */
+  const constructorIngredients = useSelector(getConstructorIngredients);
+  const constructorBun = useSelector(getConstructorBun);
+  const dispatch = useDispatch();
+  const constructorItems = {
+    bun: constructorBun,
+    ingredients: constructorIngredients
+  };
+  const orderRequest = useSelector(getOrderRequestStatus);
+
+  const orderModalData = useSelector(getLastOrder);
 
   const onOrderClick = () => {
-    if (!constructorItems.bun || orderRequest) return;
-    if (!userData) {
-      navigate('/login'), { replace: true };
-      return;
+    if (!isAuthenticated) {
+      return navigate('/login');
     }
-    const orderIngredients = [
+    if (!constructorItems.bun || orderRequest) return;
+    const ingredientsId: string[] = [
       constructorItems.bun._id,
-      ...constructorItems.ingredients.map((ingredient) => ingredient._id),
-      constructorItems.bun._id
+      ...constructorItems.ingredients.map(
+        (item: TConstructorIngredient) => item._id
+      )
     ];
-    dispatch(postOrderBurger(orderIngredients));
-  };
 
-  const closeOrderModal = () => {
-    dispatch(emptyIngredient());
-    dispatch(clearOrderData());
+    dispatch(newUserOrder(ingredientsId));
+    dispatch(resetConstructor());
+    dispatch(getAllFeeds());
   };
+  const closeOrderModal = () => dispatch(setLastOrder(null));
 
   const price = useMemo(
     () =>

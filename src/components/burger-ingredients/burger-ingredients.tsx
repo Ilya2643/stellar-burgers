@@ -1,35 +1,44 @@
-import { useState, useRef, useEffect, FC } from 'react';
+import { FC, useEffect, useMemo, useRef, useState } from 'react';
 import { useInView } from 'react-intersection-observer';
 
 import { TTabMode } from '@utils-types';
-import { BurgerIngredientsUI } from '../ui/burger-ingredients';
-import { useDispatch, useSelector } from '../../services/store';
-import {
-  selectBun,
-  selectMain,
-  selectSauce
-} from '../slices/burgerIngridientsSlice';
+import { BurgerIngredientsUI } from '@ui';
+import { useSelector } from '../../services/store';
+import { getIngredientsData } from '../../services/slices/ingredients/ingredientsSlice';
 
 export const BurgerIngredients: FC = () => {
   /** TODO: взять переменные из стора */
-
-  const buns = useSelector(selectBun);
-  const mains = useSelector(selectMain);
-  const sauces = useSelector(selectSauce);
+  const ingredients = useSelector(getIngredientsData);
+  const buns = useMemo(
+    () => ingredients.filter((ingredient) => ingredient.type === 'bun'),
+    [ingredients]
+  );
+  const mains = useMemo(
+    () => ingredients.filter((ingredient) => ingredient.type === 'main'),
+    [ingredients]
+  );
+  const sauces = useMemo(
+    () => ingredients.filter((ingredient) => ingredient.type === 'sauce'),
+    [ingredients]
+  );
 
   const [currentTab, setCurrentTab] = useState<TTabMode>('bun');
   const titleBunRef = useRef<HTMLHeadingElement>(null);
   const titleMainRef = useRef<HTMLHeadingElement>(null);
   const titleSaucesRef = useRef<HTMLHeadingElement>(null);
+
   const [bunsRef, inViewBuns] = useInView({
     threshold: 0
   });
+
   const [mainsRef, inViewFilling] = useInView({
     threshold: 0
   });
+
   const [saucesRef, inViewSauces] = useInView({
     threshold: 0
   });
+
   useEffect(() => {
     if (inViewBuns) {
       setCurrentTab('bun');
@@ -39,6 +48,7 @@ export const BurgerIngredients: FC = () => {
       setCurrentTab('main');
     }
   }, [inViewBuns, inViewFilling, inViewSauces]);
+
   const onTabClick = (tab: string) => {
     setCurrentTab(tab as TTabMode);
     if (tab === 'bun')
