@@ -1,12 +1,32 @@
-import React from 'react';
-import * as ReactDOMClient from 'react-dom/client';
-import App from './components/app/app';
+import { useSelector } from '../../services/store';
+import styles from './constructor-page.module.css';
+import { BurgerIngredients } from '../../components';
+import { BurgerConstructor } from '../../components';
+import { Preloader } from '../../components/ui';
+import { FC } from 'react';
+import { selectIsLoading } from '../../components/slices/burgerIngridientsSlice';
 
-const container = document.getElementById('root') as HTMLElement;
-const root = ReactDOMClient.createRoot(container!);
+export const ConstructorPage: FC = () => {
+  /** TODO: взять переменную из стора */
+  const isIngredientsLoading = useSelector(selectIsLoading);
 
-root.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
+  return (
+    <>
+      {isIngredientsLoading ? (
+        <Preloader />
+      ) : (
+        <main className={styles.containerMain}>
+          <h1
+            className={`${styles.title} text text_type_main-large mt-10 mb-5 pl-5`}
+          >
+            Соберите бургер
+          </h1>
+          <div className={`${styles.main} pl-5 pr-5`}>
+            <BurgerIngredients />
+            <BurgerConstructor />
+          </div>
+        </main>
+      )}
+    </>
+  );
+};

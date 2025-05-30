@@ -1,14 +1,34 @@
-import { FC } from 'react';
-import { Preloader } from '../ui/preloader';
-import { IngredientDetailsUI } from '../ui/ingredient-details';
+import { forwardRef, useMemo } from 'react';
+import { TIngredientsCategoryProps } from './type';
+import { TIngredient } from '@utils-types';
+import { IngredientsCategoryUI } from '../ui/ingredients-category';
+import { useSelector } from '../../services/store';
+import { selectBurgerConstructor } from '../slices/burgerConstructionSlice';
 
-export const IngredientDetails: FC = () => {
+export const IngredientsCategory = forwardRef<
+  HTMLUListElement,
+  TIngredientsCategoryProps
+>(({ title, titleRef, ingredients }, ref) => {
   /** TODO: взять переменную из стора */
-  const ingredientData = null;
+  const burgerConstructor = useSelector(selectBurgerConstructor);
 
-  if (!ingredientData) {
-    return <Preloader />;
-  }
-
-  return <IngredientDetailsUI ingredientData={ingredientData} />;
-};
+  const ingredientsCounters = useMemo(() => {
+    const { bun, ingredients } = burgerConstructor;
+    const counters: { [key: string]: number } = {};
+    ingredients.forEach((ingredient: TIngredient) => {
+      if (!counters[ingredient._id]) counters[ingredient._id] = 0;
+      counters[ingredient._id]++;
+    });
+    if (bun) counters[bun._id] = 2;
+    return counters;
+  }, [burgerConstructor]);
+  return (
+    <IngredientsCategoryUI
+      title={title}
+      titleRef={titleRef}
+      ingredients={ingredients}
+      ingredientsCounters={ingredientsCounters}
+      ref={ref}
+    />
+  );
+});
